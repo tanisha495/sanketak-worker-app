@@ -3,27 +3,29 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { AppButton, AppHeader, ScreenContainer } from "@/components";
 import { colors, radius, spacing, typography } from "@/constants";
+import { useLanguage } from "@/i18n/use-language";
 
 export function MoreScreen() {
+  const { t } = useLanguage();
+
   return (
     <ScreenContainer>
       <AppHeader
-        title="More"
-        subtitle="Language, help, privacy, and app information will live here."
+        title={t("more.title")}
+        subtitle={t("more.subtitle")}
       />
 
       <View style={styles.card}>
-        <Text style={styles.title}>Worker app foundation</Text>
+        <Text style={styles.title}>{t("more.cardTitle")}</Text>
         <Text style={styles.text}>
-          Settings, help, about Sanketak, privacy, and feedback screens will be
-          added incrementally after the navigation foundation is approved.
+          {t("more.cardBody")}
         </Text>
       </View>
 
       <AppButton
         href="/language"
         icon={<MaterialIcons color={colors.primary} name="language" size={22} />}
-        title="Language Selection"
+        title={t("more.languageSelection")}
         variant="secondary"
       />
     </ScreenContainer>

@@ -1,13 +1,16 @@
 import { AppButton } from "@/components";
+import { useLanguage } from "@/i18n/use-language";
 import { PlaceholderScreen } from "@/screens";
 
 export default function ReviewReportRoute() {
+  const { t } = useLanguage();
+
   return (
     <PlaceholderScreen
-      body="This screen will show the worker what Sanketak understood before submission. AI analysis will come from the backend service."
-      primaryAction={<AppButton href="/report/photo" title="Continue to Photo" />}
-      subtitle="Worker confirmation placeholder"
-      title="Review Report"
+      body={t("report.reviewBody")}
+      primaryAction={<AppButton href="/report/photo" title={t("report.continueToPhoto")} />}
+      subtitle={t("report.reviewSubtitle")}
+      title={t("report.reviewTitle")}
     />
   );
 }

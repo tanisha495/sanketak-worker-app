@@ -9,11 +9,13 @@ import {
   StatusBadge,
 } from "@/components";
 import { colors, radius, spacing, typography } from "@/constants";
+import { useLanguage } from "@/i18n/use-language";
 import { getReportById, getReportStatus } from "@/services";
 import type { ReportStatusStep, WorkerSafetyReport } from "@/types";
 import { formatReportDate } from "@/utils";
 
 export function ReportDetailsScreen() {
+  const { t } = useLanguage();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [report, setReport] = useState<WorkerSafetyReport | undefined>();
   const [steps, setSteps] = useState<ReportStatusStep[]>([]);
@@ -43,8 +45,8 @@ export function ReportDetailsScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <AppHeader showBack title="Report Details" />
-        <Text style={styles.muted}>Loading report...</Text>
+        <AppHeader showBack title={t("reportDetails.title")} />
+        <Text style={styles.muted}>{t("common.loadingReport")}</Text>
       </ScreenContainer>
     );
   }
@@ -52,10 +54,10 @@ export function ReportDetailsScreen() {
   if (!report) {
     return (
       <ScreenContainer>
-        <AppHeader showBack title="Report Details" />
+        <AppHeader showBack title={t("reportDetails.title")} />
         <EmptyState
-          message="This report could not be found in the mock data."
-          title="Report not found"
+          message={t("reportDetails.notFoundMessage")}
+          title={t("reportDetails.notFoundTitle")}
         />
       </ScreenContainer>
     );
@@ -66,7 +68,7 @@ export function ReportDetailsScreen() {
       <AppHeader
         showBack
         subtitle={report.trackingId}
-        title="Report Details"
+        title={t("reportDetails.title")}
       />
 
       <View style={styles.card}>
@@ -79,7 +81,7 @@ export function ReportDetailsScreen() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Status Timeline</Text>
+        <Text style={styles.sectionTitle}>{t("reportDetails.timeline")}</Text>
         <View style={styles.timeline}>
           {steps.map((step) => (
             <View key={step.id} style={styles.timelineRow}>
@@ -104,15 +106,15 @@ export function ReportDetailsScreen() {
 
       {report.aiAnalysis ? (
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>What Sanketak Understood</Text>
+          <Text style={styles.sectionTitle}>{t("reportDetails.understood")}</Text>
           <Text style={styles.analysisText}>
-            Activity: {report.aiAnalysis.activity}
+            {t("reportDetails.activity")}: {report.aiAnalysis.activity}
           </Text>
           <Text style={styles.analysisText}>
-            Barrier Concern: {report.aiAnalysis.barrierFailure}
+            {t("reportDetails.barrierConcern")}: {report.aiAnalysis.barrierFailure}
           </Text>
           <Text style={styles.analysisText}>
-            Life-Saving Rule: {report.aiAnalysis.lifeSavingRules.join(", ")}
+            {t("reportDetails.lifeSavingRule")}: {report.aiAnalysis.lifeSavingRules.join(", ")}
           </Text>
         </View>
       ) : null}

@@ -1,13 +1,16 @@
 import { AppButton } from "@/components";
+import { useLanguage } from "@/i18n/use-language";
 import { PlaceholderScreen } from "@/screens";
 
 export default function VoiceReportRoute() {
+  const { t } = useLanguage();
+
   return (
     <PlaceholderScreen
-      body="The microphone interface will be implemented later. For now, this route confirms the voice report flow is reachable."
-      primaryAction={<AppButton href="/report/review" title="Continue to Review" />}
-      subtitle="Voice-first reporting placeholder"
-      title="Voice Report"
+      body={t("report.voiceBody")}
+      primaryAction={<AppButton href="/report/review" title={t("report.continueToReview")} />}
+      subtitle={t("report.voiceSubtitle")}
+      title={t("report.voiceTitle")}
     />
   );
 }

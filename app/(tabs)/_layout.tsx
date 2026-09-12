@@ -2,8 +2,11 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
 import { colors, typography } from "@/constants";
+import { useLanguage } from "@/i18n/use-language";
 
 export default function TabLayout() {
+  const { t } = useLanguage();
+
   return (
     <Tabs
       screenOptions={{
@@ -24,9 +27,9 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
-          title: "Home",
+          title: t("navigation.home"),
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons color={color} name="home" size={size} />
           ),
@@ -35,7 +38,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="reports"
         options={{
-          title: "My Reports",
+          title: t("navigation.reports"),
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons color={color} name="assignment" size={size} />
           ),
@@ -44,7 +47,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="alerts"
         options={{
-          title: "Alerts",
+          title: t("navigation.alerts"),
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons color={color} name="campaign" size={size} />
           ),
@@ -53,7 +56,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="more"
         options={{
-          title: "More",
+          title: t("navigation.more"),
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons color={color} name="more-horiz" size={size} />
           ),

@@ -3,11 +3,13 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { AppHeader, EmptyState, ScreenContainer } from "@/components";
 import { colors, radius, spacing, typography } from "@/constants";
+import { useLanguage } from "@/i18n/use-language";
 import { getSafetyAlerts } from "@/services";
 import type { SafetyAlert } from "@/types";
 import { formatReportDate } from "@/utils";
 
 export function AlertsScreen() {
+  const { t } = useLanguage();
   const [alerts, setAlerts] = useState<SafetyAlert[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,16 +36,16 @@ export function AlertsScreen() {
   return (
     <ScreenContainer>
       <AppHeader
-        title="Alerts"
-        subtitle="Simple safety reminders and operational updates for workers."
+        title={t("alerts.title")}
+        subtitle={t("alerts.subtitle")}
       />
 
-      {loading ? <Text style={styles.muted}>Loading alerts...</Text> : null}
+      {loading ? <Text style={styles.muted}>{t("common.loadingAlerts")}</Text> : null}
 
       {!loading && alerts.length === 0 ? (
         <EmptyState
-          message="Relevant safety updates will appear here when available."
-          title="No active alerts"
+          message={t("alerts.emptyMessage")}
+          title={t("alerts.emptyTitle")}
         />
       ) : null}
 
@@ -55,7 +57,7 @@ export function AlertsScreen() {
               <Text style={styles.title}>{alert.title}</Text>
               <Text style={styles.message}>{alert.message}</Text>
               <Text style={styles.meta}>
-                {alert.site ?? "All sites"} • {formatReportDate(alert.issuedAt)}
+                {alert.site ?? t("common.allSites")} • {formatReportDate(alert.issuedAt)}
               </Text>
             </View>
           </View>

@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { colors, spacing, typography } from "@/constants";
+import { useLanguage } from "@/i18n/use-language";
 
 interface AppHeaderProps {
   title: string;
@@ -11,11 +12,13 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ title, subtitle, showBack = false }: AppHeaderProps) {
+  const { t } = useLanguage();
+
   return (
     <View style={styles.container}>
       {showBack ? (
         <Pressable
-          accessibilityLabel="Go back"
+          accessibilityLabel={t("common.goBack")}
           accessibilityRole="button"
           hitSlop={spacing.md}
           onPress={() => router.back()}

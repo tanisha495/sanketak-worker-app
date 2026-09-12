@@ -1,0 +1,105 @@
+export const en = {
+  common: {
+    continue: "Continue",
+    goBack: "Go back",
+    backToHome: "Back to Home",
+    allSites: "All sites",
+    loadingReports: "Loading reports...",
+    loadingAlerts: "Loading alerts...",
+    loadingReport: "Loading report...",
+  },
+  splash: {
+    brand: "SANKETAK",
+    tagline: "Every Voice for a Safer Tomorrow",
+    footer: "Safety Intelligence for OIL",
+  },
+  language: {
+    title: "Choose your language",
+    subtitle: "Select the language you want to use in Sanketak.",
+    helper: "You can change this later from More.",
+    englishName: "English",
+    englishLabel: "English",
+    englishSupport: "Continue in English",
+    hindiName: "हिन्दी",
+    hindiLabel: "Hindi",
+    hindiSupport: "हिन्दी में जारी रखें",
+    assameseName: "অসমীয়া",
+    assameseLabel: "Assamese",
+    assameseSupport: "অসমীয়াত আগবাঢ়ক",
+  },
+  navigation: {
+    home: "Home",
+    reports: "My Reports",
+    alerts: "Alerts",
+    more: "More",
+  },
+  home: {
+    title: "Home",
+    subtitle: "Sanketak worker app",
+    placeholder:
+      "The final Home Screen will be designed after the startup flow is approved.",
+  },
+  report: {
+    voiceTitle: "Voice Report",
+    voiceSubtitle: "Voice-first reporting placeholder",
+    voiceBody:
+      "The microphone interface will be implemented later. For now, this route confirms the voice report flow is reachable.",
+    textTitle: "Text Report",
+    textSubtitle: "Manual reporting placeholder",
+    textBody:
+      "The text report form will be built in a later step. This placeholder keeps the report navigation path available.",
+    reviewTitle: "Review Report",
+    reviewSubtitle: "Worker confirmation placeholder",
+    reviewBody:
+      "This screen will show the worker what Sanketak understood before submission. AI analysis will come from the backend service.",
+    photoTitle: "Add Photo",
+    photoSubtitle: "Optional evidence placeholder",
+    photoBody:
+      "Camera and image selection are intentionally not implemented yet. This route reserves the photo step.",
+    successTitle: "Report Submitted",
+    successSubtitle: "Anonymous submission placeholder",
+    successBody:
+      "A submitted report confirmation will show the anonymous tracking ID here. The current screen verifies the success route.",
+    continueToReview: "Continue to Review",
+    continueToPhoto: "Continue to Photo",
+    submitMockReport: "Submit Mock Report",
+    viewMyReports: "View My Reports",
+  },
+  reports: {
+    title: "My Reports",
+    subtitle: "Track submitted safety observations and corrective action progress.",
+    emptyTitle: "No reports yet",
+    emptyMessage: "Reports submitted from this device will appear here.",
+    startReport: "Start a Report",
+  },
+  alerts: {
+    title: "Alerts",
+    subtitle: "Simple safety reminders and operational updates for workers.",
+    emptyTitle: "No active alerts",
+    emptyMessage: "Relevant safety updates will appear here when available.",
+  },
+  more: {
+    title: "More",
+    subtitle: "Language, help, privacy, and app information will live here.",
+    cardTitle: "Worker app foundation",
+    cardBody:
+      "Settings, help, about Sanketak, privacy, and feedback screens will be added incrementally after the startup flow is approved.",
+    languageSelection: "Language Selection",
+  },
+  reportDetails: {
+    title: "Report Details",
+    notFoundTitle: "Report not found",
+    notFoundMessage: "This report could not be found in the mock data.",
+    timeline: "Status Timeline",
+    understood: "What Sanketak Understood",
+    activity: "Activity",
+    barrierConcern: "Barrier Concern",
+    lifeSavingRule: "Life-Saving Rule",
+  },
+  reportStatus: {
+    submitted: "Submitted",
+    under_review: "Under Review",
+    action_in_progress: "Action in Progress",
+    verified: "Verified",
+  },
+} as const;

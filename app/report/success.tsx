@@ -1,13 +1,16 @@
 import { AppButton } from "@/components";
+import { useLanguage } from "@/i18n/use-language";
 import { PlaceholderScreen } from "@/screens";
 
 export default function SubmissionSuccessRoute() {
+  const { t } = useLanguage();
+
   return (
     <PlaceholderScreen
-      body="A submitted report confirmation will show the anonymous tracking ID here. The current screen verifies the success route."
-      primaryAction={<AppButton href="/reports" title="View My Reports" />}
-      subtitle="Anonymous submission placeholder"
-      title="Report Submitted"
+      body={t("report.successBody")}
+      primaryAction={<AppButton href="/reports" title={t("report.viewMyReports")} />}
+      subtitle={t("report.successSubtitle")}
+      title={t("report.successTitle")}
     />
   );
 }

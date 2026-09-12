@@ -1,27 +1,67 @@
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useEffect, useState } from "react";
 
 import { colors } from "@/constants";
+import { LanguageProvider } from "@/i18n";
+import { useLanguage } from "@/i18n/use-language";
+import { SplashScreen } from "@/screens";
 
 export default function RootLayout() {
   return (
-    <>
+    <LanguageProvider>
       <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          contentStyle: { backgroundColor: colors.background },
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="report/voice" />
-        <Stack.Screen name="report/text" />
-        <Stack.Screen name="report/review" />
-        <Stack.Screen name="report/photo" />
-        <Stack.Screen name="report/success" />
-        <Stack.Screen name="report-details/[id]" />
-        <Stack.Screen name="language" />
-      </Stack>
-    </>
+      <StartupGate />
+    </LanguageProvider>
+  );
+}
+
+function StartupGate() {
+  const { hasSelectedLanguage, isReady } = useLanguage();
+  const [minimumSplashElapsed, setMinimumSplashElapsed] = useState(false);
+  const [startupComplete, setStartupComplete] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMinimumSplashElapsed(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!isReady || !minimumSplashElapsed || startupComplete) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      router.replace(hasSelectedLanguage ? "/home" : "/language");
+      setStartupComplete(true);
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [hasSelectedLanguage, isReady, minimumSplashElapsed, startupComplete]);
+
+  if (!startupComplete) {
+    return <SplashScreen />;
+  }
+
+  return (
+    <Stack
+      screenOptions={{
+        contentStyle: { backgroundColor: colors.background },
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name="index" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="language" />
+      <Stack.Screen name="report/voice" />
+      <Stack.Screen name="report/text" />
+      <Stack.Screen name="report/review" />
+      <Stack.Screen name="report/photo" />
+      <Stack.Screen name="report/success" />
+      <Stack.Screen name="report-details/[id]" />
+    </Stack>
   );
 }

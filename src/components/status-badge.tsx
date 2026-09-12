@@ -1,8 +1,8 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { colors, radius, spacing, typography } from "@/constants";
+import { useLanguage } from "@/i18n/use-language";
 import type { ReportStatus } from "@/types";
-import { reportStatusLabels } from "@/utils";
 
 interface StatusBadgeProps {
   status: ReportStatus;
@@ -23,11 +23,12 @@ const statusStyles: Record<
 
 export function StatusBadge({ status }: StatusBadgeProps) {
   const style = statusStyles[status];
+  const { t } = useLanguage();
 
   return (
     <View style={[styles.badge, { backgroundColor: style.backgroundColor }]}>
       <Text style={[styles.label, { color: style.color }]}>
-        {reportStatusLabels[status]}
+        {t(`reportStatus.${status}`)}
       </Text>
     </View>
   );

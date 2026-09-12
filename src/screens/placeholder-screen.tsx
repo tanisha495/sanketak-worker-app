@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { AppButton, AppHeader, ScreenContainer } from "@/components";
 import { colors, radius, spacing, typography } from "@/constants";
+import { useLanguage } from "@/i18n/use-language";
 
 interface PlaceholderScreenProps {
   title: string;
@@ -19,6 +20,8 @@ export function PlaceholderScreen({
   primaryAction,
   showBack = true,
 }: PlaceholderScreenProps) {
+  const { t } = useLanguage();
+
   return (
     <ScreenContainer>
       <AppHeader showBack={showBack} subtitle={subtitle} title={title} />
@@ -26,7 +29,7 @@ export function PlaceholderScreen({
         <Text style={styles.body}>{body}</Text>
       </View>
       {primaryAction ?? (
-        <AppButton href="/" title="Back to Home" variant="secondary" />
+        <AppButton href="/home" title={t("common.backToHome")} variant="secondary" />
       )}
     </ScreenContainer>
   );
