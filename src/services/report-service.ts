@@ -1,12 +1,24 @@
-import { mockReports, mockSafetyAlerts } from "@/data";
+import { mockSafetyAlerts } from "@/data";
+import type { ReportDraft } from "@/report-draft";
 import type {
+  ReportLanguage,
   ReportStatus,
   ReportStatusStep,
   SafetyAlert,
-  SubmitReportInput,
   WorkerSafetyReport,
 } from "@/types";
 import { getReportStatusSteps } from "@/utils";
+import { createReportId, createTrackingId } from "./report-id-service";
+import {
+  getReportById as getPersistedReportById,
+  getReports as getPersistedReports,
+  saveReport,
+} from "./report-repository";
+
+export {
+  getReportByTrackingToken,
+  submittedReportsStorageKey,
+} from "./report-repository";
 
 const MOCK_DELAY_MS = 150;
 
@@ -16,45 +28,62 @@ function wait(ms = MOCK_DELAY_MS): Promise<void> {
   });
 }
 
-function createTrackingId(): string {
-  const suffix = Math.random().toString(36).slice(2, 7).toUpperCase();
-  return `SNK-${suffix}`;
-}
-
 export async function submitReport(
-  input: SubmitReportInput,
+  draft: ReportDraft,
 ): Promise<WorkerSafetyReport> {
-  await wait();
+  const description = draft.description.trim();
 
-  return {
-    id: `report-${Date.now()}`,
+  if (!description) {
+    throw new Error("Report description is required.");
+  }
+
+  const report: WorkerSafetyReport = {
+    id: createReportId(),
     trackingId: createTrackingId(),
-    description: input.description,
-    language: input.language,
-    site: input.site,
-    areaOrEquipment: input.areaOrEquipment,
+    description,
+    language: mapReportLanguage(draft.reportLanguage),
+    site: draft.site ?? "Not provided",
+    areaOrEquipment: draft.area?.trim() || "Not provided",
     submittedAt: new Date().toISOString(),
     status: "submitted",
-    reportingMethod: input.reportingMethod,
-    photoUri: input.photoUri,
+    reportingMethod: draft.reportingMethod,
+    photoUri: draft.photoUri,
+    audioUri: draft.audioUri,
+    aiAnalysis: draft.analysis,
   };
+
+  return saveReport(report);
 }
 
 export async function getReports(): Promise<WorkerSafetyReport[]> {
   await wait();
-  return mockReports;
+  return getPersistedReports();
 }
 
 export async function getReportById(
   id: string,
 ): Promise<WorkerSafetyReport | undefined> {
   await wait();
-  return mockReports.find((report) => report.id === id);
+  return getPersistedReportById(id);
 }
 
 export async function getSafetyAlerts(): Promise<SafetyAlert[]> {
   await wait();
   return mockSafetyAlerts;
+}
+
+function mapReportLanguage(
+  language: ReportDraft["reportLanguage"],
+): ReportLanguage {
+  if (language === "hi") {
+    return "hindi";
+  }
+
+  if (language === "as") {
+    return "assamese";
+  }
+
+  return "english";
 }
 
 export async function getReportStatus(

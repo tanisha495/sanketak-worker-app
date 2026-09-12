@@ -5,13 +5,16 @@ import { useEffect, useState } from "react";
 import { colors } from "@/constants";
 import { LanguageProvider } from "@/i18n";
 import { useLanguage } from "@/i18n/use-language";
+import { ReportDraftProvider } from "@/report-draft";
 import { SplashScreen } from "@/screens";
 
 export default function RootLayout() {
   return (
     <LanguageProvider>
-      <StatusBar style="dark" />
-      <StartupGate />
+      <ReportDraftProvider>
+        <StatusBar style="dark" />
+        <StartupGate />
+      </ReportDraftProvider>
     </LanguageProvider>
   );
 }
@@ -60,6 +63,7 @@ function StartupGate() {
       <Stack.Screen name="report/text" />
       <Stack.Screen name="report/review" />
       <Stack.Screen name="report/photo" />
+      <Stack.Screen name="report/submit" />
       <Stack.Screen name="report/success" />
       <Stack.Screen name="report-details/[id]" />
     </Stack>

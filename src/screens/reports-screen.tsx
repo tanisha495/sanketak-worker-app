@@ -1,5 +1,5 @@
-import { Link } from "expo-router";
-import { useEffect, useState } from "react";
+import { Link, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import {
@@ -20,8 +20,9 @@ export function ReportsScreen() {
   const [reports, setReports] = useState<WorkerSafetyReport[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadReports = useCallback(() => {
     let mounted = true;
+    setLoading(true);
 
     getReports()
       .then((items) => {
@@ -39,6 +40,8 @@ export function ReportsScreen() {
       mounted = false;
     };
   }, []);
+
+  useFocusEffect(loadReports);
 
   return (
     <ScreenContainer>

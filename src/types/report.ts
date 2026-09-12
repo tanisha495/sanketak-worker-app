@@ -28,6 +28,7 @@ export interface WorkerSafetyReport {
   status: ReportStatus;
   reportingMethod: ReportingMethod;
   photoUri?: string;
+  audioUri?: string;
   aiAnalysis?: SifAnalysis;
 }
 
