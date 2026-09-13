@@ -76,6 +76,13 @@ export function SubmissionSuccessScreen() {
       </SafeAreaView>
     );
   }
+  const isQueued = report.syncStatus === "queued" || report.syncStatus === "failed";
+  const isSyncing = report.syncStatus === "syncing";
+  const statusText = isQueued
+    ? t("offline.waitingToSend")
+    : isSyncing
+      ? t("offline.sending")
+      : undefined;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -87,8 +94,12 @@ export function SubmissionSuccessScreen() {
           <View style={styles.checkCircle}>
             <MaterialIcons color={colors.white} name="check" size={70} />
           </View>
-          <Text style={styles.heading}>{t("success.heading")}</Text>
-          <Text style={styles.subtitle}>{t("success.subtitle")}</Text>
+          <Text style={styles.heading}>
+            {isQueued ? t("offline.savedTitle") : t("success.heading")}
+          </Text>
+          <Text style={styles.subtitle}>
+            {isQueued ? t("offline.savedDescription") : t("success.subtitle")}
+          </Text>
         </View>
 
         <View style={styles.trackingCard}>
@@ -108,7 +119,13 @@ export function SubmissionSuccessScreen() {
 
         <View style={styles.statusRow}>
           <Text style={styles.statusLabel}>{t("success.status")}</Text>
-          <StatusBadge status={report.status} />
+          {statusText ? (
+            <View style={styles.syncBadge}>
+              <Text style={styles.syncBadgeText}>{statusText}</Text>
+            </View>
+          ) : (
+            <StatusBadge status={report.status} />
+          )}
         </View>
 
         <View style={styles.nextCard}>
@@ -122,7 +139,9 @@ export function SubmissionSuccessScreen() {
           <View style={styles.nextCopy}>
             <Text style={styles.nextTitle}>{t("success.whatNext")}</Text>
             <Text style={styles.nextText}>
-              {t("success.whatNextDescription")}
+              {isQueued
+                ? t("offline.savedDescription")
+                : t("success.whatNextDescription")}
             </Text>
             <Text style={styles.nextText}>{t("success.trackProgress")}</Text>
           </View>
@@ -289,6 +308,18 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     lineHeight: 24,
     textAlign: "center",
+  },
+  syncBadge: {
+    backgroundColor: colors.warningSoft,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  syncBadgeText: {
+    color: colors.warning,
+    fontSize: typography.small,
+    fontWeight: "900",
+    textTransform: "uppercase",
   },
   trackingCard: {
     backgroundColor: colors.surfaceGreen,

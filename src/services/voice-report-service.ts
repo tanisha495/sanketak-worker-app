@@ -2,6 +2,11 @@ import type { AppLanguage } from "@/i18n";
 import type { ReportAnalysis, ReportDraft } from "@/report-draft";
 import { analysisService } from "@/services/analysis-service";
 import { transcriptionService } from "@/services/transcription-service";
+import {
+  getSupabaseFunctionUrl,
+  getSupabasePublishableKey,
+  isSupabaseConfigured,
+} from "./supabase-client";
 
 export interface VoiceReportResponse {
   transcript: string;
@@ -37,6 +42,10 @@ export async function processVoiceReport(
     return processMockVoiceReport(audioUri, language);
   }
 
+  if (isSupabaseConfigured()) {
+    return processSupabaseVoiceReport(audioUri, language);
+  }
+
   const apiBaseUrl = getApiBaseUrl();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
@@ -53,6 +62,44 @@ export async function processVoiceReport(
 
     if (!response.ok) {
       throw new Error(`Voice report request failed with ${response.status}.`);
+    }
+
+    const payload = (await response.json()) as BackendVoiceReportResponse;
+    return mapVoiceReportResponse(payload);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function processSupabaseVoiceReport(
+  audioUri: string,
+  language: AppLanguage,
+): Promise<VoiceReportResponse> {
+  const publishableKey = getSupabasePublishableKey();
+
+  if (!publishableKey) {
+    throw new Error("EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY is not configured.");
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
+
+  try {
+    const response = await fetch(getSupabaseFunctionUrl("process-voice-report"), {
+      body: buildVoiceReportFormData(audioUri, language),
+      headers: {
+        Accept: "application/json",
+        apikey: publishableKey,
+        Authorization: `Bearer ${publishableKey}`,
+      },
+      method: "POST",
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Supabase voice report request failed with ${response.status}.`,
+      );
     }
 
     const payload = (await response.json()) as BackendVoiceReportResponse;

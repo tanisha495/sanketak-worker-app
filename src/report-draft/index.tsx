@@ -3,11 +3,19 @@ import {
   type ReactNode,
   use,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from "react";
+import { Alert } from "react-native";
 
 import type { AppLanguage } from "@/i18n";
+import { useLanguage } from "@/i18n/use-language";
+import {
+  clearActiveReportDraft,
+  getActiveReportDraft,
+  saveActiveReportDraft,
+} from "@/services/draft-repository";
 
 export type ReportingMethod = "voice" | "text" | "photo";
 export type ReportSite = "Duliajan" | "Moran" | "Digboi";
@@ -49,7 +57,9 @@ const initialDraft: ReportDraft = {
 const ReportDraftContext = createContext<ReportDraftContextValue | null>(null);
 
 export function ReportDraftProvider({ children }: { children: ReactNode }) {
+  const { t } = useLanguage();
   const [draft, setDraft] = useState<ReportDraft>(initialDraft);
+  const [hydrated, setHydrated] = useState(false);
 
   const updateDraft = useCallback((patch: Partial<ReportDraft>) => {
     setDraft((current) => ({
@@ -64,7 +74,60 @@ export function ReportDraftProvider({ children }: { children: ReactNode }) {
 
   const resetDraft = useCallback(() => {
     setDraft(initialDraft);
+    clearActiveReportDraft();
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    getActiveReportDraft()
+      .then((storedDraft) => {
+        if (!mounted || !storedDraft || !hasMeaningfulDraft(storedDraft)) {
+          return;
+        }
+
+        Alert.alert(t("draft.restoreTitle"), t("draft.restoreDescription"), [
+          {
+            onPress: () => {
+              clearActiveReportDraft();
+              setDraft(initialDraft);
+            },
+            style: "destructive",
+            text: t("draft.startNew"),
+          },
+          {
+            onPress: () => setDraft(storedDraft),
+            text: t("draft.continue"),
+          },
+        ]);
+      })
+      .finally(() => {
+        if (mounted) {
+          setHydrated(true);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [t]);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (hasMeaningfulDraft(draft)) {
+        saveActiveReportDraft(draft);
+        return;
+      }
+
+      clearActiveReportDraft();
+    }, 650);
+
+    return () => clearTimeout(timer);
+  }, [draft, hydrated]);
 
   const value = useMemo(
     () => ({
@@ -80,6 +143,16 @@ export function ReportDraftProvider({ children }: { children: ReactNode }) {
     <ReportDraftContext.Provider value={value}>
       {children}
     </ReportDraftContext.Provider>
+  );
+}
+
+function hasMeaningfulDraft(draft: ReportDraft): boolean {
+  return Boolean(
+    draft.description.trim() ||
+      draft.audioUri ||
+      draft.photoUri ||
+      draft.site ||
+      draft.area?.trim(),
   );
 }
 

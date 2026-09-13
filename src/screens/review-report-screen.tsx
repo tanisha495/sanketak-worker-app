@@ -13,25 +13,34 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppButton } from "@/components";
 import { colors, radius, spacing, touchTarget, typography } from "@/constants";
+import { useNetworkStatus } from "@/hooks/use-network-status";
 import { useLanguage } from "@/i18n/use-language";
 import type { ReportAnalysis } from "@/report-draft";
 import { useReportDraft } from "@/report-draft";
 import { analysisService } from "@/services/analysis-service";
 
-type AnalysisState = "loading" | "success" | "error";
+type AnalysisState = "loading" | "success" | "error" | "offline";
 
 export function ReviewReportScreen() {
   const { t } = useLanguage();
+  const { isOnline, isUnknown } = useNetworkStatus();
   const { draft, updateDraft } = useReportDraft();
   const [analysis, setAnalysis] = useState<ReportAnalysis | undefined>(
     draft.analysis,
   );
   const [analysisState, setAnalysisState] = useState<AnalysisState>(
-    draft.analysis ? "success" : "loading",
+    draft.analysis ? "success" : isOnline || isUnknown ? "loading" : "offline",
   );
 
   const runAnalysis = useCallback(() => {
     let mounted = true;
+
+    if (!isOnline) {
+      setAnalysisState("offline");
+      return () => {
+        mounted = false;
+      };
+    }
 
     setAnalysisState("loading");
 
@@ -55,7 +64,7 @@ export function ReviewReportScreen() {
     return () => {
       mounted = false;
     };
-  }, [draft, updateDraft]);
+  }, [draft, isOnline, updateDraft]);
 
   useEffect(() => {
     if (draft.analysis) {
@@ -104,6 +113,8 @@ export function ReviewReportScreen() {
 
         {analysisState === "loading" ? (
           <LoadingState />
+        ) : analysisState === "offline" ? (
+          <OfflinePendingState />
         ) : analysisState === "error" || !analysis ? (
           <ErrorState onEdit={handleEditReport} onRetry={runAnalysis} />
         ) : (
@@ -229,6 +240,59 @@ export function ReviewReportScreen() {
           />
         </View>
       </View>
+    );
+  }
+
+  function OfflinePendingState() {
+    return (
+      <>
+        <View style={styles.messageCard}>
+          <View style={styles.messageIcon}>
+            <MaterialIcons color={colors.white} name="schedule" size={28} />
+          </View>
+          <Text style={styles.messageText}>{t("offline.analysisPending")}</Text>
+        </View>
+
+        <View style={styles.originalSection}>
+          <Text style={styles.sectionTitle}>{t("review.originalReport")}</Text>
+          <View style={styles.originalCard}>
+            <Text style={styles.originalText}>"{draft.description}"</Text>
+          </View>
+        </View>
+
+        {draft.site || draft.area ? (
+          <View style={styles.contextCard}>
+            {draft.site ? (
+              <ContextLine label={t("review.site")} value={draft.site} />
+            ) : null}
+            {draft.area ? (
+              <ContextLine label={t("review.area")} value={draft.area} />
+            ) : null}
+          </View>
+        ) : null}
+
+        <View style={styles.pendingCard}>
+          <MaterialIcons color={colors.primary} name="cloud-off" size={32} />
+          <Text style={styles.pendingTitle}>{t("offline.analysisPending")}</Text>
+          <Text style={styles.pendingText}>
+            {t("offline.analysisPendingDescription")}
+          </Text>
+        </View>
+
+        <View style={styles.actions}>
+          <AppButton
+            onPress={handleEditReport}
+            style={styles.secondaryButton}
+            title={t("review.edit")}
+            variant="outline"
+          />
+          <AppButton
+            onPress={handleLooksCorrect}
+            style={styles.primaryButton}
+            title={t("common.continue")}
+          />
+        </View>
+      </>
     );
   }
 }
@@ -435,6 +499,25 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: typography.body,
     lineHeight: 26,
+  },
+  pendingCard: {
+    alignItems: "center",
+    backgroundColor: colors.surfaceGreen,
+    borderRadius: radius.lg,
+    gap: spacing.sm,
+    padding: spacing.lg,
+  },
+  pendingText: {
+    color: colors.textMuted,
+    fontSize: typography.body,
+    lineHeight: 23,
+    textAlign: "center",
+  },
+  pendingTitle: {
+    color: colors.primaryDark,
+    fontSize: typography.subheading,
+    fontWeight: "900",
+    textAlign: "center",
   },
   primaryButton: {
     borderRadius: radius.lg,

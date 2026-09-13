@@ -22,9 +22,11 @@ import {
 
 import { AppButton, ScreenContainer } from "@/components";
 import { colors, radius, spacing, touchTarget, typography } from "@/constants";
+import { useNetworkStatus } from "@/hooks/use-network-status";
 import type { AppLanguage } from "@/i18n";
 import { useLanguage } from "@/i18n/use-language";
 import { useReportDraft } from "@/report-draft";
+import { queueReportForOfflineProcessing } from "@/services";
 import { processVoiceReport } from "@/services/voice-report-service";
 
 const reportLanguages: AppLanguage[] = ["en", "hi", "as"];
@@ -33,7 +35,8 @@ type VoiceRecordingState = "idle" | "recording" | "recorded" | "playing";
 export function VoiceReportScreen() {
   const { height } = useWindowDimensions();
   const { language, t } = useLanguage();
-  const { updateDraft } = useReportDraft();
+  const { resetDraft, updateDraft } = useReportDraft();
+  const { isOnline } = useNetworkStatus();
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [selectedReportLanguage, setSelectedReportLanguage] =
     useState<AppLanguage>(language);
@@ -288,6 +291,22 @@ export function VoiceReportScreen() {
     setProcessingError(false);
 
     try {
+      if (!isOnline) {
+        const report = await queueReportForOfflineProcessing({
+          audioUri,
+          description: "",
+          reportLanguage: selectedReportLanguage,
+          reportingMethod: "voice",
+        });
+
+        resetDraft();
+        router.replace({
+          pathname: "/report/success",
+          params: { reportId: report.id },
+        });
+        return;
+      }
+
       const voiceReport = await processVoiceReport(
         audioUri,
         selectedReportLanguage,
@@ -460,6 +479,18 @@ export function VoiceReportScreen() {
           );
         })}
       </View>
+
+      {!isOnline ? (
+        <View style={styles.offlineNotice}>
+          <MaterialIcons color={colors.warning} name="signal-wifi-off" size={24} />
+          <View style={styles.offlineNoticeCopy}>
+            <Text style={styles.offlineNoticeTitle}>{t("network.offline")}</Text>
+            <Text style={styles.offlineNoticeText}>
+              {t("offline.voiceSavedDescription")}
+            </Text>
+          </View>
+        </View>
+      ) : null}
 
       {recordingState === "recorded" || recordingState === "playing" ? (
         <View style={styles.previewSection}>
@@ -744,6 +775,28 @@ const styles = StyleSheet.create({
   micWrap: {
     alignItems: "center",
     justifyContent: "center",
+  },
+  offlineNotice: {
+    alignItems: "center",
+    backgroundColor: colors.warningSoft,
+    borderRadius: radius.lg,
+    flexDirection: "row",
+    gap: spacing.md,
+    padding: spacing.md,
+  },
+  offlineNoticeCopy: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  offlineNoticeText: {
+    color: colors.textMuted,
+    fontSize: typography.caption,
+    lineHeight: 19,
+  },
+  offlineNoticeTitle: {
+    color: colors.text,
+    fontSize: typography.caption,
+    fontWeight: "900",
   },
   pressed: {
     opacity: 0.78,

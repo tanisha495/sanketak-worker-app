@@ -30,7 +30,8 @@
           "cameraPermission": "Sanketak needs camera access so you can take a safety observation photo.",
           "photosPermission": "Sanketak needs photo library access so you can attach a safety observation photo."
         }
-      ]
+      ],
+      "expo-sqlite"
     ]
   }
 }

@@ -12,12 +12,10 @@ const statusStyles: Record<
   ReportStatus,
   { backgroundColor: string; color: string }
 > = {
-  submitted: { backgroundColor: colors.infoSoft, color: colors.info },
+  submitted: { backgroundColor: colors.surfaceGreen, color: colors.primary },
   under_review: { backgroundColor: colors.warningSoft, color: colors.warning },
-  action_in_progress: {
-    backgroundColor: colors.primarySoft,
-    color: colors.primary,
-  },
+  action_assigned: { backgroundColor: colors.infoSoft, color: colors.info },
+  actioned: { backgroundColor: colors.primarySoft, color: colors.primary },
   verified: { backgroundColor: colors.successSoft, color: colors.success },
 };
 

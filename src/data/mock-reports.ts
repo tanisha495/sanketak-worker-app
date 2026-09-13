@@ -30,7 +30,7 @@ export const mockReports: WorkerSafetyReport[] = [
     site: "Moran Field Area",
     areaOrEquipment: "Access Road / Excavation Zone E-12",
     submittedAt: "2026-09-09T14:40:00.000Z",
-    status: "action_in_progress",
+    status: "actioned",
     reportingMethod: "text",
     aiAnalysis: {
       activity: "Walking near excavation",

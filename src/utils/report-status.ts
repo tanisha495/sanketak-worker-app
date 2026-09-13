@@ -1,25 +1,35 @@
 import type { ReportStatus, ReportStatusStep } from "@/types";
 
-const orderedStatuses: ReportStatus[] = [
+const orderedTimelineStages: ReportStatusStep["id"][] = [
   "submitted",
-  "under_review",
-  "action_in_progress",
+  "reviewed",
+  "action_assigned",
+  "actioned",
   "verified",
 ];
 
 export const reportStatusLabels: Record<ReportStatus, string> = {
   submitted: "Submitted",
   under_review: "Under Review",
-  action_in_progress: "Action in Progress",
+  action_assigned: "Action Assigned",
+  actioned: "Action Taken",
   verified: "Verified",
 };
 
-export function getReportStatusSteps(status: ReportStatus): ReportStatusStep[] {
-  const activeIndex = orderedStatuses.indexOf(status);
+const statusTimelineStage: Record<ReportStatus, ReportStatusStep["id"]> = {
+  submitted: "submitted",
+  under_review: "reviewed",
+  action_assigned: "action_assigned",
+  actioned: "actioned",
+  verified: "verified",
+};
 
-  return orderedStatuses.map((item, index) => ({
+export function getReportStatusSteps(status: ReportStatus): ReportStatusStep[] {
+  const activeIndex = orderedTimelineStages.indexOf(statusTimelineStage[status]);
+
+  return orderedTimelineStages.map((item, index) => ({
     id: item,
-    label: reportStatusLabels[item],
+    label: item,
     completed: index < activeIndex || status === "verified",
     active: index === activeIndex,
   }));

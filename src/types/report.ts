@@ -3,10 +3,12 @@ export type ReportLanguage = "english" | "hindi" | "assamese" | "mixed";
 export type ReportStatus =
   | "submitted"
   | "under_review"
-  | "action_in_progress"
+  | "action_assigned"
+  | "actioned"
   | "verified";
 
 export type ReportingMethod = "voice" | "text" | "photo";
+export type SyncStatus = "queued" | "syncing" | "synced" | "failed";
 
 export interface SifAnalysis {
   activity: string;
@@ -30,6 +32,13 @@ export interface WorkerSafetyReport {
   photoUri?: string;
   audioUri?: string;
   aiAnalysis?: SifAnalysis;
+  syncStatus?: SyncStatus;
+  syncedAt?: string;
+  syncError?: string;
+  detectedLanguage?: string;
+  remoteReportId?: string;
+  remotePhotoPath?: string;
+  remoteAudioPath?: string;
 }
 
 export interface SubmitReportInput {
@@ -42,7 +51,7 @@ export interface SubmitReportInput {
 }
 
 export interface ReportStatusStep {
-  id: ReportStatus;
+  id: "submitted" | "reviewed" | "action_assigned" | "actioned" | "verified";
   label: string;
   completed: boolean;
   active: boolean;

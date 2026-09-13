@@ -13,13 +13,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppButton } from "@/components";
 import { colors, radius, spacing, touchTarget, typography } from "@/constants";
+import { useNetworkStatus } from "@/hooks/use-network-status";
 import type { TranslationKey } from "@/i18n";
 import { useLanguage } from "@/i18n/use-language";
 import { useReportDraft } from "@/report-draft";
-import { submitReport } from "@/services";
+import {
+  MediaPersistenceError,
+  queueReportForOfflineProcessing,
+  submitReport,
+} from "@/services";
 
 export function SubmitReportScreen() {
   const { t } = useLanguage();
+  const { isOnline } = useNetworkStatus();
   const { draft, resetDraft } = useReportDraft();
   const [submitting, setSubmitting] = useState(false);
   const [submitFailed, setSubmitFailed] = useState(false);
@@ -41,13 +47,21 @@ export function SubmitReportScreen() {
     setSubmitFailed(false);
 
     try {
-      const report = await submitReport(draft);
+      const shouldQueue = !isOnline || !draft.analysis;
+      const report = shouldQueue
+        ? await queueReportForOfflineProcessing(draft)
+        : await submitReport(draft);
       resetDraft();
       router.replace({
         pathname: "/report/success",
         params: { reportId: report.id },
       });
-    } catch {
+    } catch (error) {
+      if (error instanceof MediaPersistenceError) {
+        setSubmitFailed(true);
+        return;
+      }
+
       setSubmitFailed(true);
     } finally {
       submissionInFlight.current = false;
@@ -147,6 +161,18 @@ export function SubmitReportScreen() {
             </Text>
           </View>
         </View>
+
+        {!analysis ? (
+          <View style={styles.pendingCard}>
+            <MaterialIcons color={colors.primary} name="schedule" size={30} />
+            <View style={styles.errorCopy}>
+              <Text style={styles.pendingTitle}>{t("offline.analysisPending")}</Text>
+              <Text style={styles.errorSubtitle}>
+                {t("offline.analysisPendingDescription")}
+              </Text>
+            </View>
+          </View>
+        ) : null}
 
         {submitFailed ? (
           <View style={styles.errorCard}>
@@ -324,6 +350,19 @@ const styles = StyleSheet.create({
   },
   loadingTitle: {
     color: colors.text,
+    fontSize: typography.body,
+    fontWeight: "900",
+  },
+  pendingCard: {
+    alignItems: "flex-start",
+    backgroundColor: colors.surfaceGreen,
+    borderRadius: radius.lg,
+    flexDirection: "row",
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  pendingTitle: {
+    color: colors.primaryDark,
     fontSize: typography.body,
     fontWeight: "900",
   },

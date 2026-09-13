@@ -1,23 +1,29 @@
-import { mockSafetyAlerts } from "@/data";
 import type { ReportDraft } from "@/report-draft";
 import type {
+  OfflineQueueItem,
   ReportLanguage,
   ReportStatus,
   ReportStatusStep,
-  SafetyAlert,
   WorkerSafetyReport,
 } from "@/types";
 import { getReportStatusSteps } from "@/utils";
+import { addToQueue } from "./offline-queue-service";
+import { persistMedia } from "./media-persistence-service";
 import { createReportId, createTrackingId } from "./report-id-service";
+import { submitReportToSupabase } from "./remote-report-service";
 import {
   getReportById as getPersistedReportById,
   getReports as getPersistedReports,
   saveReport,
+  updateReportSyncStatus,
 } from "./report-repository";
 
 export {
   getReportByTrackingToken,
+  saveReport,
   submittedReportsStorageKey,
+  updateReportSyncStatus,
+  updateReportStatus,
 } from "./report-repository";
 
 const MOCK_DELAY_MS = 150;
@@ -50,9 +56,68 @@ export async function submitReport(
     photoUri: draft.photoUri,
     audioUri: draft.audioUri,
     aiAnalysis: draft.analysis,
+    detectedLanguage:
+      typeof draft.detectedLanguage === "string"
+        ? draft.detectedLanguage
+        : undefined,
+    syncStatus: "synced",
+    syncedAt: new Date().toISOString(),
+  };
+  const remoteResult = await submitReportToSupabase(report);
+
+  return saveReport({
+    ...report,
+    ...remoteResult,
+  });
+}
+
+export async function queueReportForOfflineProcessing(
+  draft: ReportDraft,
+): Promise<WorkerSafetyReport> {
+  const now = new Date().toISOString();
+  const reportId = createReportId();
+  const trackingId = createTrackingId();
+  const persistedPhotoUri = await persistMedia(draft.photoUri, "photo");
+  const persistedAudioUri = await persistMedia(draft.audioUri, "audio");
+  const queuedDraft: ReportDraft = {
+    ...draft,
+    audioUri: persistedAudioUri,
+    photoUri: persistedPhotoUri,
   };
 
-  return saveReport(report);
+  const report: WorkerSafetyReport = {
+    id: reportId,
+    trackingId,
+    description: draft.description.trim(),
+    language: mapReportLanguage(draft.reportLanguage),
+    site: draft.site ?? "Not provided",
+    areaOrEquipment: draft.area?.trim() || "Not provided",
+    submittedAt: now,
+    status: "submitted",
+    reportingMethod: draft.reportingMethod,
+    photoUri: persistedPhotoUri,
+    audioUri: persistedAudioUri,
+    aiAnalysis: draft.analysis,
+    detectedLanguage:
+      typeof draft.detectedLanguage === "string"
+        ? draft.detectedLanguage
+        : undefined,
+    syncStatus: "queued",
+  };
+  const queueItem: OfflineQueueItem = {
+    id: `queue-${reportId}`,
+    clientReportId: reportId,
+    type: draft.reportingMethod === "voice" ? "voice_report" : "text_report",
+    status: "pending",
+    createdAt: now,
+    retryCount: 0,
+    reportDraft: queuedDraft,
+  };
+
+  await saveReport(report);
+  await addToQueue(queueItem);
+
+  return report;
 }
 
 export async function getReports(): Promise<WorkerSafetyReport[]> {
@@ -65,11 +130,6 @@ export async function getReportById(
 ): Promise<WorkerSafetyReport | undefined> {
   await wait();
   return getPersistedReportById(id);
-}
-
-export async function getSafetyAlerts(): Promise<SafetyAlert[]> {
-  await wait();
-  return mockSafetyAlerts;
 }
 
 function mapReportLanguage(

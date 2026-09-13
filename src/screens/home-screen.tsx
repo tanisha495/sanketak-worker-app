@@ -1,13 +1,32 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import { router, type Href } from "expo-router";
+import { router, type Href, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { ScreenContainer } from "@/components";
 import { colors, radius, spacing, touchTarget, typography } from "@/constants";
 import { useLanguage } from "@/i18n/use-language";
+import { getUnreadSafetyAlertCount } from "@/services";
 
 export function HomeScreen() {
   const { t } = useLanguage();
+  const [unreadAlerts, setUnreadAlerts] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      let mounted = true;
+
+      getUnreadSafetyAlertCount().then((count) => {
+        if (mounted) {
+          setUnreadAlerts(count);
+        }
+      });
+
+      return () => {
+        mounted = false;
+      };
+    }, []),
+  );
 
   return (
     <ScreenContainer style={styles.screen}>
@@ -40,6 +59,13 @@ export function HomeScreen() {
           style={({ pressed }) => [styles.bellButton, pressed && styles.pressed]}
         >
           <MaterialIcons color={colors.text} name="notifications-none" size={31} />
+          {unreadAlerts > 0 ? (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>
+                {unreadAlerts > 9 ? "9+" : unreadAlerts}
+              </Text>
+            </View>
+          ) : null}
         </Pressable>
       </View>
 
@@ -235,6 +261,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: touchTarget.minHeight,
     minWidth: touchTarget.minHeight,
+  },
+  bellBadge: {
+    alignItems: "center",
+    backgroundColor: colors.danger,
+    borderColor: colors.white,
+    borderRadius: radius.pill,
+    borderWidth: 2,
+    minHeight: 20,
+    minWidth: 20,
+    paddingHorizontal: 4,
+    position: "absolute",
+    right: 2,
+    top: 3,
+  },
+  bellBadgeText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: "900",
+    lineHeight: 14,
   },
   decorOne: {
     backgroundColor: colors.surfaceGreen,
