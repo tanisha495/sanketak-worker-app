@@ -322,7 +322,8 @@ export function VoiceReportScreen() {
       });
 
       router.push("/report/review");
-    } catch {
+    } catch (error) {
+      console.error("Voice report processing failed:", error);
       setProcessingError(true);
     } finally {
       setSubmitting(false);

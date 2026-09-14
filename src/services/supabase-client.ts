@@ -44,12 +44,45 @@ export function getSupabaseFunctionUrl(functionName: string): string {
 
 export function getSupabasePublishableKey(): string | undefined {
   return (
-    process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() ||
-    process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
+    readPublicEnvValue(process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY) ||
+    readPublicEnvValue(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY) ||
     undefined
   );
 }
 
 function getSupabaseUrl(): string | undefined {
-  return process.env.EXPO_PUBLIC_SUPABASE_URL?.trim() || undefined;
+  return readPublicEnvValue(process.env.EXPO_PUBLIC_SUPABASE_URL);
+}
+
+function readPublicEnvValue(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (trimmed.startsWith("e''") && trimmed.endsWith("''")) {
+    return normalizeSupabaseKey(trimmed.slice(3, -2).trim());
+  }
+
+  if (
+    (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+    (trimmed.startsWith('"') && trimmed.endsWith('"'))
+  ) {
+    return normalizeSupabaseKey(trimmed.slice(1, -1).trim());
+  }
+
+  return normalizeSupabaseKey(trimmed);
+}
+
+function normalizeSupabaseKey(value: string): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  if (value.startsWith("yJ") && value.split(".").length === 3) {
+    return `e${value}`;
+  }
+
+  return value;
 }

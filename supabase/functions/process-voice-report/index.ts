@@ -24,6 +24,13 @@ type DenoFormData = {
   get(name: string): Blob | File | string | null;
 };
 
+interface JsonVoicePayload {
+  audioBase64?: unknown;
+  fileName?: unknown;
+  language?: unknown;
+  mimeType?: unknown;
+}
+
 class VoiceFunctionError extends Error {
   constructor(
     public safeMessage: string,
@@ -53,13 +60,7 @@ Deno.serve(async (request) => {
       throw new VoiceFunctionError("Voice transcription is not configured.", 500);
     }
 
-    const formData = (await request.formData()) as unknown as DenoFormData;
-    const audio = formData.get("audio");
-    const language = validateLanguage(formData.get("language"));
-
-    if (!isUploadedAudio(audio)) {
-      throw new VoiceFunctionError("Audio file is required.", 400);
-    }
+    const { audio, language } = await readVoiceInput(request);
 
     const transcript = await transcribeAudio(audio, language, openAiKey);
     const analysis = await analyseSafetyReport(transcript, openAiKey);
@@ -79,6 +80,45 @@ Deno.serve(async (request) => {
     return json({ error: "Voice transcription failed." }, 500);
   }
 });
+
+async function readVoiceInput(
+  request: Request,
+): Promise<{ audio: Blob | File; language: string }> {
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    const payload = (await request.json()) as JsonVoicePayload;
+    const language = validateLanguage(
+      typeof payload.language === "string" ? payload.language : null,
+    );
+    const audioBase64 = readJsonString(payload.audioBase64, "Audio file is required.");
+    const fileName = readOptionalString(payload.fileName) ?? "voice-report.m4a";
+    const mimeType = readOptionalString(payload.mimeType) ?? "audio/m4a";
+    const audioBytes = decodeBase64Audio(audioBase64);
+
+    if (audioBytes.byteLength === 0) {
+      throw new VoiceFunctionError("Audio file is required.", 400);
+    }
+
+    const audioBuffer = new ArrayBuffer(audioBytes.byteLength);
+    new Uint8Array(audioBuffer).set(audioBytes);
+
+    return {
+      audio: new File([audioBuffer], fileName, { type: mimeType }),
+      language,
+    };
+  }
+
+  const formData = (await request.formData()) as unknown as DenoFormData;
+  const audio = formData.get("audio");
+  const language = validateLanguage(formData.get("language"));
+
+  if (!isUploadedAudio(audio)) {
+    throw new VoiceFunctionError("Audio file is required.", 400);
+  }
+
+  return { audio, language };
+}
 
 async function transcribeAudio(
   audio: Blob | File,
@@ -249,6 +289,23 @@ function isUploadedAudio(value: Blob | File | string | null): value is Blob | Fi
   return typeof value !== "string" && value instanceof Blob && value.size > 0;
 }
 
+function decodeBase64Audio(value: string): Uint8Array {
+  const normalized = value.includes(",") ? value.split(",").pop() ?? "" : value;
+
+  try {
+    const binary = atob(normalized);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+
+    return bytes;
+  } catch {
+    throw new VoiceFunctionError("Audio file is invalid.", 400);
+  }
+}
+
 function validateLanguage(value: Blob | File | string | null): string {
   const language = typeof value === "string" && value ? value : "en";
 
@@ -257,6 +314,18 @@ function validateLanguage(value: Blob | File | string | null): string {
   }
 
   return language;
+}
+
+function readJsonString(value: unknown, message: string): string {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new VoiceFunctionError(message, 400);
+  }
+
+  return value.trim();
+}
+
+function readOptionalString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
 function getTranscriptionPrompt(language: string): string {
