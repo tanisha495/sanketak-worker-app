@@ -113,6 +113,23 @@ async function processVoiceQueueItem(
   item: OfflineQueueItem,
   report: WorkerSafetyReport,
 ): Promise<WorkerSafetyReport> {
+  const queuedDescription = item.reportDraft.description.trim();
+  const existingDescription = report.description.trim();
+  const existingAnalysis = item.reportDraft.analysis ?? report.aiAnalysis;
+
+  if ((queuedDescription || existingDescription) && existingAnalysis) {
+    return {
+      ...report,
+      aiAnalysis: existingAnalysis,
+      audioUri: item.reportDraft.audioUri ?? report.audioUri,
+      description: queuedDescription || existingDescription,
+      detectedLanguage:
+        typeof item.reportDraft.detectedLanguage === "string"
+          ? item.reportDraft.detectedLanguage
+          : report.detectedLanguage,
+    };
+  }
+
   if (!item.reportDraft.audioUri) {
     throw new Error("Queued voice report is missing audio.");
   }

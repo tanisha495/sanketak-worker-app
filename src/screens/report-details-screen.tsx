@@ -13,6 +13,10 @@ import {
 import { colors, radius, spacing, typography } from "@/constants";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import type { TranslationKey } from "@/i18n";
+import {
+  translateAnalysisList,
+  translateAnalysisValue,
+} from "@/i18n/report-analysis";
 import { useLanguage } from "@/i18n/use-language";
 import {
   getReportById,
@@ -214,23 +218,26 @@ export function ReportDetailsScreen() {
           </Text>
           <DetailRow
             label={t("reportStatus.activity")}
-            value={report.aiAnalysis.activity}
+            value={translateAnalysisValue(report.aiAnalysis.activity, t)}
           />
           <DetailRow
             label={t("reportStatus.hazard")}
-            value={report.aiAnalysis.hazard}
+            value={translateAnalysisValue(report.aiAnalysis.hazard, t)}
           />
           <DetailRow
             label={t("reportStatus.safetyConcern")}
-            value={report.aiAnalysis.barrierFailure}
+            value={translateAnalysisValue(report.aiAnalysis.barrierFailure, t)}
           />
           <DetailRow
             label={t("reportStatus.lifeSavingRule")}
-            value={report.aiAnalysis.lifeSavingRules.join(", ")}
+            value={translateAnalysisList(report.aiAnalysis.lifeSavingRules, t)}
           />
           <DetailRow
             label={t("reportStatus.potentialConsequence")}
-            value={report.aiAnalysis.potentialConsequence}
+            value={translateAnalysisValue(
+              report.aiAnalysis.potentialConsequence,
+              t,
+            )}
           />
         </View>
       ) : !isSynced ? (

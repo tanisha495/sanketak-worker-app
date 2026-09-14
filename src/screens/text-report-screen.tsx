@@ -25,9 +25,10 @@ const maxDescriptionLength = 1000;
 const minDescriptionLength = 10;
 
 const siteOptions: Array<{ value: ReportSite; labelKey: TranslationKey }> = [
-  { value: "Duliajan", labelKey: "textReport.siteDuliajan" },
-  { value: "Moran", labelKey: "textReport.siteMoran" },
+  { value: "Mathura", labelKey: "textReport.siteMathura" },
+  { value: "Barauni", labelKey: "textReport.siteBarauni" },
   { value: "Digboi", labelKey: "textReport.siteDigboi" },
+  { value: "Panipat", labelKey: "textReport.sitePanipat" },
 ];
 
 export function TextReportScreen() {
@@ -301,15 +302,19 @@ function Bullet({ text }: { text: string }) {
 }
 
 function getSiteLabelKey(site: ReportSite): TranslationKey {
-  if (site === "Moran") {
-    return "textReport.siteMoran";
+  if (site === "Barauni") {
+    return "textReport.siteBarauni";
   }
 
   if (site === "Digboi") {
     return "textReport.siteDigboi";
   }
 
-  return "textReport.siteDuliajan";
+  if (site === "Panipat") {
+    return "textReport.sitePanipat";
+  }
+
+  return "textReport.siteMathura";
 }
 
 const styles = StyleSheet.create({

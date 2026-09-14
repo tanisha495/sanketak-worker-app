@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {
   Image,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,27 +16,46 @@ import { AppButton } from "@/components";
 import { colors, radius, spacing, touchTarget, typography } from "@/constants";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import type { TranslationKey } from "@/i18n";
+import {
+  translateAnalysisList,
+  translateAnalysisValue,
+} from "@/i18n/report-analysis";
 import { useLanguage } from "@/i18n/use-language";
-import { useReportDraft } from "@/report-draft";
+import { type ReportSite, useReportDraft } from "@/report-draft";
 import {
   MediaPersistenceError,
   queueReportForOfflineProcessing,
   submitReport,
 } from "@/services";
+import { analysisService } from "@/services/analysis-service";
+
+const siteOptions: Array<{ value: ReportSite; labelKey: TranslationKey }> = [
+  { value: "Mathura", labelKey: "textReport.siteMathura" },
+  { value: "Barauni", labelKey: "textReport.siteBarauni" },
+  { value: "Digboi", labelKey: "textReport.siteDigboi" },
+  { value: "Panipat", labelKey: "textReport.sitePanipat" },
+];
 
 export function SubmitReportScreen() {
   const { t } = useLanguage();
   const { isOnline } = useNetworkStatus();
-  const { draft, resetDraft } = useReportDraft();
+  const { draft, resetDraft, updateDraft } = useReportDraft();
   const [submitting, setSubmitting] = useState(false);
   const [submitFailed, setSubmitFailed] = useState(false);
+  const [sitePickerVisible, setSitePickerVisible] = useState(false);
   const submissionInFlight = useRef(false);
   const analysis = draft.analysis;
 
   const methodLabel = t(getMethodLabelKey(draft.reportingMethod));
+  const siteLabel = draft.site ? t(getSiteLabelKey(draft.site)) : t("textReport.sitePlaceholder");
   const photoStatus = draft.photoUri
     ? t("submit.photoAttached")
     : t("submit.photoNotAdded");
+
+  const handleSiteSelect = (site: ReportSite) => {
+    updateDraft({ site });
+    setSitePickerVisible(false);
+  };
 
   const handleSubmit = async () => {
     if (submitting || submissionInFlight.current) {
@@ -47,10 +67,29 @@ export function SubmitReportScreen() {
     setSubmitFailed(false);
 
     try {
-      const shouldQueue = !isOnline || !draft.analysis;
-      const report = shouldQueue
-        ? await queueReportForOfflineProcessing(draft)
-        : await submitReport(draft);
+      if (!isOnline) {
+        const report = await queueReportForOfflineProcessing(draft);
+
+        resetDraft();
+        router.replace({
+          pathname: "/report/success",
+          params: { reportId: report.id },
+        });
+        return;
+      }
+
+      const finalDraft = draft.analysis
+        ? draft
+        : {
+            ...draft,
+            analysis: await analysisService.analyseReport(draft),
+          };
+
+      if (!draft.analysis) {
+        updateDraft({ analysis: finalDraft.analysis });
+      }
+
+      const report = await submitReport(finalDraft);
       resetDraft();
       router.replace({
         pathname: "/report/success",
@@ -94,6 +133,35 @@ export function SubmitReportScreen() {
           <Text style={styles.subtitle}>{t("submit.subtitle")}</Text>
         </View>
 
+        <View style={styles.siteSection}>
+          <Text style={styles.fieldLabel}>{t("textReport.site")}</Text>
+          <Pressable
+            accessibilityLabel={t("textReport.site")}
+            accessibilityRole="button"
+            disabled={submitting}
+            onPress={() => setSitePickerVisible(true)}
+            style={({ pressed }) => [
+              styles.siteSelect,
+              pressed ? styles.pressed : null,
+            ]}
+          >
+            <MaterialIcons color={colors.primary} name="factory" size={31} />
+            <Text
+              style={[
+                styles.siteSelectText,
+                draft.site ? styles.siteSelectedText : styles.sitePlaceholderText,
+              ]}
+            >
+              {siteLabel}
+            </Text>
+            <MaterialIcons
+              color={colors.textMuted}
+              name="keyboard-arrow-down"
+              size={30}
+            />
+          </Pressable>
+        </View>
+
         <View style={styles.summaryCard}>
           <Text style={styles.cardTitle}>{t("submit.summaryTitle")}</Text>
           <SummaryRow
@@ -104,7 +172,7 @@ export function SubmitReportScreen() {
           <SummaryRow
             icon="factory"
             label={t("submit.site")}
-            value={draft.site ?? t("submit.notProvided")}
+            value={draft.site ? siteLabel : t("submit.notProvided")}
           />
           {draft.area ? (
             <SummaryRow
@@ -128,14 +196,14 @@ export function SubmitReportScreen() {
             <SummaryRow
               icon="verified-user"
               label={t("submit.safetyConcern")}
-              value={analysis.barrierFailure}
+              value={translateAnalysisValue(analysis.barrierFailure, t)}
             />
           ) : null}
           {analysis?.lifeSavingRules.length ? (
             <SummaryRow
               icon="assignment"
               label={t("submit.lifeSavingRule")}
-              value={analysis.lifeSavingRules.join(", ")}
+              value={translateAnalysisList(analysis.lifeSavingRules, t)}
             />
           ) : null}
           {analysis?.potentialConsequence ? (
@@ -143,7 +211,7 @@ export function SubmitReportScreen() {
               icon="warning-amber"
               label={t("submit.potentialConsequence")}
               last
-              value={analysis.potentialConsequence}
+              value={translateAnalysisValue(analysis.potentialConsequence, t)}
             />
           ) : null}
         </View>
@@ -203,6 +271,48 @@ export function SubmitReportScreen() {
           title={submitFailed ? t("submit.tryAgain") : t("submit.submitButton")}
         />
       </ScrollView>
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setSitePickerVisible(false)}
+        transparent
+        visible={sitePickerVisible}
+      >
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setSitePickerVisible(false)}
+          style={styles.modalBackdrop}
+        >
+          <Pressable
+            onPress={(event) => event.stopPropagation()}
+            style={styles.siteSheet}
+          >
+            <Text style={styles.siteSheetTitle}>{t("textReport.site")}</Text>
+            {siteOptions.map((option) => {
+              const selected = draft.site === option.value;
+
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  key={option.value}
+                  onPress={() => handleSiteSelect(option.value)}
+                  style={({ pressed }) => [
+                    styles.siteOption,
+                    selected ? styles.siteOptionSelected : null,
+                    pressed ? styles.pressed : null,
+                  ]}
+                >
+                  <Text style={styles.siteOptionText}>{t(option.labelKey)}</Text>
+                  {selected ? (
+                    <MaterialIcons color={colors.primary} name="check" size={24} />
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -247,6 +357,22 @@ function getMethodLabelKey(method: string): TranslationKey {
   }
 
   return "submit.text";
+}
+
+function getSiteLabelKey(site: ReportSite): TranslationKey {
+  if (site === "Barauni") {
+    return "textReport.siteBarauni";
+  }
+
+  if (site === "Digboi") {
+    return "textReport.siteDigboi";
+  }
+
+  if (site === "Panipat") {
+    return "textReport.sitePanipat";
+  }
+
+  return "textReport.siteMathura";
 }
 
 const styles = StyleSheet.create({
@@ -321,6 +447,11 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     fontWeight: "900",
   },
+  fieldLabel: {
+    color: colors.textMuted,
+    fontSize: typography.body,
+    lineHeight: 24,
+  },
   header: {
     alignItems: "center",
     flexDirection: "row",
@@ -353,6 +484,13 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     fontWeight: "900",
   },
+  modalBackdrop: {
+    alignItems: "center",
+    backgroundColor: "rgba(23, 33, 27, 0.32)",
+    flex: 1,
+    justifyContent: "flex-end",
+    padding: spacing.xl,
+  },
   pendingCard: {
     alignItems: "flex-start",
     backgroundColor: colors.surfaceGreen,
@@ -365,6 +503,9 @@ const styles = StyleSheet.create({
     color: colors.primaryDark,
     fontSize: typography.body,
     fontWeight: "900",
+  },
+  pressed: {
+    opacity: 0.78,
   },
   rowCopy: {
     flex: 1,
@@ -398,6 +539,60 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     marginTop: "auto",
     minHeight: 60,
+  },
+  siteOption: {
+    alignItems: "center",
+    borderRadius: radius.md,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    minHeight: 56,
+    paddingHorizontal: spacing.md,
+  },
+  siteOptionSelected: {
+    backgroundColor: colors.primarySoft,
+  },
+  siteOptionText: {
+    color: colors.text,
+    fontSize: typography.body,
+    fontWeight: "700",
+  },
+  sitePlaceholderText: {
+    color: "#7B8494",
+  },
+  siteSection: {
+    gap: spacing.sm,
+  },
+  siteSelect: {
+    alignItems: "center",
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.md,
+    minHeight: 64,
+    paddingHorizontal: spacing.lg,
+  },
+  siteSelectedText: {
+    color: colors.text,
+  },
+  siteSelectText: {
+    flex: 1,
+    fontSize: typography.subheading,
+    fontWeight: "700",
+  },
+  siteSheet: {
+    backgroundColor: colors.white,
+    borderRadius: radius.lg,
+    gap: spacing.sm,
+    padding: spacing.lg,
+    width: "100%",
+  },
+  siteSheetTitle: {
+    color: colors.text,
+    fontSize: typography.subheading,
+    fontWeight: "900",
+    paddingBottom: spacing.sm,
   },
   subtitle: {
     color: colors.text,

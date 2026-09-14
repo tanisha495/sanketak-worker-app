@@ -7,7 +7,7 @@ export const mockReports: WorkerSafetyReport[] = [
     description:
       "Pump maintenance started before the team confirmed energy isolation.",
     language: "english",
-    site: "Duliajan Production Site",
+    site: "Mathura (UP)",
     areaOrEquipment: "Pump House 3 / Transfer Pump P-204",
     submittedAt: "2026-09-10T09:15:00.000Z",
     status: "under_review",
@@ -27,7 +27,7 @@ export const mockReports: WorkerSafetyReport[] = [
     description:
       "Excavation area near the walkway did not have a proper barricade.",
     language: "english",
-    site: "Moran Field Area",
+    site: "Barauni (Bihar)",
     areaOrEquipment: "Access Road / Excavation Zone E-12",
     submittedAt: "2026-09-09T14:40:00.000Z",
     status: "actioned",
@@ -47,7 +47,7 @@ export const mockReports: WorkerSafetyReport[] = [
     description:
       "Gas smell noticed near the separator area during the morning round.",
     language: "mixed",
-    site: "Naharkatia Facility",
+    site: "Digboi (Assam)",
     areaOrEquipment: "Separator Unit S-11",
     submittedAt: "2026-09-11T06:30:00.000Z",
     status: "submitted",
@@ -67,7 +67,7 @@ export const mockReports: WorkerSafetyReport[] = [
     description:
       "Valve handle was damaged and difficult to operate on the water injection line.",
     language: "english",
-    site: "Jorajan Installation",
+    site: "Panipat (Haryana)",
     areaOrEquipment: "Water Injection Line / Valve V-17",
     submittedAt: "2026-09-07T11:05:00.000Z",
     status: "verified",

@@ -38,6 +38,7 @@ export async function submitReport(
   draft: ReportDraft,
 ): Promise<WorkerSafetyReport> {
   const description = draft.description.trim();
+  const now = new Date().toISOString();
 
   if (!description) {
     throw new Error("Report description is required.");
@@ -50,7 +51,7 @@ export async function submitReport(
     language: mapReportLanguage(draft.reportLanguage),
     site: draft.site ?? "Not provided",
     areaOrEquipment: draft.area?.trim() || "Not provided",
-    submittedAt: new Date().toISOString(),
+    submittedAt: now,
     status: "submitted",
     reportingMethod: draft.reportingMethod,
     photoUri: draft.photoUri,
@@ -61,8 +62,9 @@ export async function submitReport(
         ? draft.detectedLanguage
         : undefined,
     syncStatus: "synced",
-    syncedAt: new Date().toISOString(),
+    syncedAt: now,
   };
+
   const remoteResult = await submitReportToSupabase(report);
 
   return saveReport({

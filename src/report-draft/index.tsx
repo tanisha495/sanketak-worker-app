@@ -18,7 +18,7 @@ import {
 } from "@/services/draft-repository";
 
 export type ReportingMethod = "voice" | "text" | "photo";
-export type ReportSite = "Duliajan" | "Moran" | "Digboi";
+export type ReportSite = "Mathura" | "Barauni" | "Digboi" | "Panipat";
 
 export interface ReportAnalysis {
   activity: string;

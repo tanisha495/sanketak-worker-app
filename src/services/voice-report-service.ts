@@ -1,3 +1,5 @@
+import * as FileSystem from "expo-file-system/legacy";
+
 import type { AppLanguage } from "@/i18n";
 import type { ReportAnalysis, ReportDraft } from "@/report-draft";
 import { analysisService } from "@/services/analysis-service";
@@ -81,31 +83,36 @@ async function processSupabaseVoiceReport(
     throw new Error("EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY is not configured.");
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
-
-  try {
-    const response = await fetch(getSupabaseFunctionUrl("process-voice-report"), {
-      body: buildVoiceReportFormData(audioUri, language),
+  const timeout = createTimeoutPromise(requestTimeoutMs);
+  const upload = FileSystem.uploadAsync(
+    getSupabaseFunctionUrl("process-voice-report"),
+    audioUri,
+    {
+      fieldName: "audio",
       headers: {
         Accept: "application/json",
         apikey: publishableKey,
         Authorization: `Bearer ${publishableKey}`,
       },
-      method: "POST",
-      signal: controller.signal,
-    });
+      httpMethod: "POST",
+      mimeType: getAudioMimeType(getAudioExtension(audioUri)),
+      parameters: {
+        language,
+      },
+      uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+    },
+  );
+  const response = await Promise.race([upload, timeout]);
 
-    if (!response.ok) {
-      throw new Error(
-        `Supabase voice report request failed with ${response.status}.`,
-      );
-    }
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(getBackendErrorMessage(response.body, response.status));
+  }
 
-    const payload = (await response.json()) as BackendVoiceReportResponse;
+  try {
+    const payload = JSON.parse(response.body) as BackendVoiceReportResponse;
     return mapVoiceReportResponse(payload);
-  } finally {
-    clearTimeout(timeout);
+  } catch {
+    throw new Error("Invalid voice report response from Supabase.");
   }
 }
 
@@ -211,6 +218,30 @@ function assertString(value: unknown, fieldName: string) {
   }
 
   return value;
+}
+
+function createTimeoutPromise(
+  timeoutMs: number,
+): Promise<FileSystem.FileSystemUploadResult> {
+  return new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error("Voice report request timed out."));
+    }, timeoutMs);
+  });
+}
+
+function getBackendErrorMessage(body: string, status: number) {
+  try {
+    const payload = JSON.parse(body) as { error?: unknown };
+
+    if (typeof payload.error === "string" && payload.error.trim()) {
+      return payload.error;
+    }
+  } catch {
+    // Fall through to generic status error.
+  }
+
+  return `Supabase voice report request failed with ${status}.`;
 }
 
 async function processMockVoiceReport(

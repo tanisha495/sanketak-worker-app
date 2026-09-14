@@ -14,6 +14,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AppButton } from "@/components";
 import { colors, radius, spacing, touchTarget, typography } from "@/constants";
 import { useNetworkStatus } from "@/hooks/use-network-status";
+import {
+  translateAnalysisList,
+  translateAnalysisValue,
+} from "@/i18n/report-analysis";
 import { useLanguage } from "@/i18n/use-language";
 import type { ReportAnalysis } from "@/report-draft";
 import { useReportDraft } from "@/report-draft";
@@ -130,36 +134,36 @@ export function ReviewReportScreen() {
               <AnalysisRow
                 icon="precision-manufacturing"
                 label={t("review.activity")}
-                value={analysis.activity}
+                value={translateAnalysisValue(analysis.activity, t)}
               />
               <AnalysisRow
                 icon="warning-amber"
                 iconColor={colors.warning}
                 label={t("review.hazard")}
-                value={analysis.hazard}
+                value={translateAnalysisValue(analysis.hazard, t)}
               />
               <AnalysisRow
                 icon="groups"
                 label={t("review.exposure")}
-                value={analysis.exposure}
+                value={translateAnalysisValue(analysis.exposure, t)}
               />
               <AnalysisRow
                 icon="verified-user"
                 label={t("review.safetyConcern")}
                 meta={t("review.barrierFailure")}
-                value={analysis.barrierFailure}
+                value={translateAnalysisValue(analysis.barrierFailure, t)}
               />
               <AnalysisRow
                 icon="medical-services"
                 iconColor={colors.danger}
                 label={t("review.potentialConsequence")}
-                value={analysis.potentialConsequence}
+                value={translateAnalysisValue(analysis.potentialConsequence, t)}
               />
               <AnalysisRow
                 icon="article"
                 label={t("review.lifeSavingRule")}
                 last
-                value={analysis.lifeSavingRules.join(", ")}
+                value={translateAnalysisList(analysis.lifeSavingRules, t)}
               />
             </View>
 

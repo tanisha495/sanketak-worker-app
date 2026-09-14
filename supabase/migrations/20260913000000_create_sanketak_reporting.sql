@@ -109,6 +109,16 @@ alter table public.reports enable row level security;
 alter table public.report_analysis enable row level security;
 alter table public.report_status_events enable row level security;
 
+grant usage on schema public to anon, authenticated;
+grant insert, update on public.reports to anon;
+grant select, insert, update on public.reports to authenticated;
+grant select, insert, update on public.reports to service_role;
+grant insert, update on public.report_analysis to anon;
+grant select, insert, update on public.report_analysis to authenticated;
+grant select, insert, update on public.report_analysis to service_role;
+grant select, insert, update, delete on public.report_status_events to authenticated;
+grant select, insert, update, delete on public.report_status_events to service_role;
+
 drop policy if exists "Anonymous workers can submit reports" on public.reports;
 create policy "Anonymous workers can submit reports"
 on public.reports
@@ -222,3 +232,5 @@ select
 from public.reports
 left join public.report_analysis
   on report_analysis.report_client_id = reports.client_report_id;
+
+grant select on public.employer_report_dashboard to authenticated;
